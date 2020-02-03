@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NLog;
+using System;
 using System.Configuration;
+using System.Threading.Tasks;
 
 namespace Billogram.Integration
 {
@@ -18,42 +20,41 @@ namespace Billogram.Integration
             client = new BillogramClient(url, userId, password);
         }
 
-        public Response<Invoice> Create(Invoice invoice)
+        public async Task<Response<Invoice>> Create(Invoice invoice)
         {
+            string result = "";
             var dateTimeConverter = new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd" };
             var content = JsonConvert.SerializeObject(invoice, dateTimeConverter);
-            var postResult = client.Post("billogram", content);
-            if (postResult.StatusCode == System.Net.HttpStatusCode.OK)
+            try
             {
-                var result = postResult.Content.ReadAsStringAsync().Result;
+                result = await client.Post("billogram", content);
                 var data = JsonConvert.DeserializeObject<Response<Invoice>>(result);
                 return data;
-            } else
+            } catch(Exception ex)
             {
                 logger.Error(string.Format("Create - {0}: {1}",
-                    postResult.StatusCode,
+                    result,
                     content));
-                return new Response<Invoice> { Status = postResult.StatusCode.ToString() };
+                throw ex;
             }
         }
 
-        public Response<Invoice> Send(string invoiceId)
+        public async Task<Response<Invoice>> Send(string invoiceId)
         {
-            var postResult = client.Post(
-                string.Format("billogram/{0}/command/send", invoiceId),
-                @"{ ""method"": ""Email"" }");
-            if (postResult.StatusCode == System.Net.HttpStatusCode.OK)
+            string result = "";
+            try
             {
-                var result = postResult.Content.ReadAsStringAsync().Result;
+                result = await client.Post(
+                    string.Format("billogram/{0}/command/send", invoiceId), @"{ ""method"": ""Email"" }");
                 var data = JsonConvert.DeserializeObject<Response<Invoice>>(result);
                 return data;
             }
-            else
+            catch(Exception ex)
             {
                 logger.Error(string.Format("Create - {0}: {1}",
-                    postResult.StatusCode,
+                    result,
                     invoiceId));
-                return new Response<Invoice> { Status = postResult.StatusCode.ToString() };
+                throw ex;
             }
         }
 

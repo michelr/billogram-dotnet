@@ -15,7 +15,7 @@ namespace Billogram.Tests
         public void CreateInvoice()
         {
             var customer = new CustomerRepository();
-            var c = customer.Get(1);
+            var c = customer.Get(50).GetAwaiter().GetResult();
             var invoice = new InvoiceRepository();
             var response = invoice.Create(new Invoice
             {
@@ -30,7 +30,7 @@ namespace Billogram.Tests
                 ReminderFee = 0,
                 AutoReminders = true,
                 AutoRemindersSettings = new Reminder[] { new Reminder { DelayDays = 3, Message = "Glöm inte betala" } }
-            });
+            }).GetAwaiter().GetResult();
             Assert.Equal("OK", response.Status);
         }
 
@@ -38,7 +38,7 @@ namespace Billogram.Tests
         public void SendInvoice()
         {
             var invoice = new InvoiceRepository();
-            var response = invoice.Send("EVeEPDy");
+            var response = invoice.Send("vt2nWyp").GetAwaiter().GetResult();
             Assert.Equal("OK", response.Status);
         }
     }

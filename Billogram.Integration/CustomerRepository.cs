@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using NLog;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Threading.Tasks;
 
 namespace Billogram.Integration
 {
@@ -19,62 +21,58 @@ namespace Billogram.Integration
             client = new BillogramClient(url, userId, password);
         }
 
-        public Response<Customer> Create(Customer customer)
+        public async Task<Response<Customer>> Create(Customer customer)
         {
             var content = JsonConvert.SerializeObject(customer);
-            var postResult = client.Post("customer", content);
-            if (postResult.StatusCode == System.Net.HttpStatusCode.OK)
+            string result = "";
+            try
             {
-                var result = postResult.Content.ReadAsStringAsync().Result;
+                result = await client.Post("customer", content);
                 var dateTimeConverter = new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" };
                 var data = JsonConvert.DeserializeObject<Response<Customer>>(result, dateTimeConverter);
                 return data;
-            } else
+            } catch(Exception ex)
             {
-                logger.Error(string.Format("Create - {0}: {1}",
-                    postResult.StatusCode,
-                    content));
-                return new Response<Customer> { Status = postResult.StatusCode.ToString() };
+                logger.Error(ex, "Create:", result, content);
+                throw ex;
             }
         }
 
-        public Response<Customer> Get(int customerNo)
+        public async Task<Response<Customer>> Get(int customerNo)
         {
-            var postResult = client.Get(string.Format("customer/{0}", customerNo));
-            if (postResult.StatusCode == System.Net.HttpStatusCode.OK)
+            string result = "";
+            try
             {
-                var result = postResult.Content.ReadAsStringAsync().Result;
+                result = await client.Get(string.Format("customer/{0}", customerNo));
                 var dateTimeConverter = new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" };
                 var data = JsonConvert.DeserializeObject<Response<Customer>>(result, dateTimeConverter);
                 return data;
-            }
-            else
+            }catch (Exception ex)
             {
-                logger.Error(string.Format("Get - {0}: {1}",
-                    postResult.StatusCode,
-                    customerNo));
-                return new Response<Customer> { Status = postResult.StatusCode.ToString() };
+                logger.Error(ex, "Get with customerNo:", result, customerNo);
+                throw ex;
             }
         }
 
-        public Response<List<Customer>> Get(string email, string birthDate)
+        public async Task<Response<List<Customer>>> Get(string email, string birthDate)
         {
             var url = string.Format("customer?filter_field=contact:email&filter_value={0}&page=1&page_size=10&filter_type=field&filter_field=org_no&filter_value={1}", email, birthDate);
-            var postResult = client.Get(url);
-            if (postResult.StatusCode == System.Net.HttpStatusCode.OK)
+
+            string result = "";
+            try
             {
-                var result = postResult.Content.ReadAsStringAsync().Result;
+                result = await client.Get(url);
                 var dateTimeConverter = new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd HH:mm:ss" };
                 var data = JsonConvert.DeserializeObject<Response<List<Customer>>>(result, dateTimeConverter);
                 return data;
             }
-            else
+            catch (Exception ex)
             {
-                logger.Error(string.Format("Get - {0}: {1} {2}",
-                    postResult.StatusCode,
+                logger.Error(ex, "Get with email and birthDate:", 
+                    result,
                     email,
-                    birthDate));
-                return new Response<List<Customer>> { Status = postResult.StatusCode.ToString() };
+                    birthDate);
+                throw ex;
             }
         }
     }

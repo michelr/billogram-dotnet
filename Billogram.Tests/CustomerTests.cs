@@ -15,7 +15,7 @@ namespace Billogram.Tests
         public void GetCustomer()
         {
             var customer = new CustomerRepository();
-            var result = customer.Get(1);
+            var result = customer.Get(1).GetAwaiter().GetResult();
             Assert.Equal("OK", result.Status);
         }
 
@@ -23,7 +23,7 @@ namespace Billogram.Tests
         public void GetCustomerWithEmailAndBirthDate()
         {
             var customer = new CustomerRepository();
-            var result = customer.Get("mr@michel.se", "790118");
+            var result = customer.Get("mr@michel.se", "790118").GetAwaiter().GetResult();
             Assert.Equal("OK", result.Status);
             Assert.True(result.Data.Any());
         }
@@ -33,7 +33,7 @@ namespace Billogram.Tests
         {
             var customer = new CustomerRepository();
             var response = customer.Create(new Customer {
-                Name = "Michel R",
+                Name = "Michel Radosavljevic",
                 Type = "individual",
                 ContactInfo = new ContactInfo
                 {
@@ -48,7 +48,7 @@ namespace Billogram.Tests
                     Country = "SE"
                 }
 
-            });
+            }).GetAwaiter().GetResult();
 
             Assert.Equal("OK", response.Status);
         }
